@@ -44,9 +44,12 @@ Resources:
                 - npm install
             build:
               commands:
-                - vue-cli-service build
+                - npm run-script build
+            start:
+              commands:
+                - npm run-script serve
           artifacts:
-            baseDirectory: 'Website/build'
+            baseDirectory: 'Website/dist'
             files:
               - '**/*'
           cache:
