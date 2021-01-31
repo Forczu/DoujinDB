@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  Repository:
+    Type: String
+    Description: GitHub Repository URL
+  OAuthToken:
+    Type: String
+    Description: GitHub Access Token
+    NoEcho: true
+Resources:
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: amplify.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: amplify-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "amplify:*"
+                Resource: "*"
+
+  App:
+    Type: AWS::Amplify::App
+    Properties:
+      Name: doujin-db-amplify-app
+      Repository: !Ref Repository
+      Description: DoujinDB Website App
+      OauthToken: !Ref OAuthToken
+      BuildSpec: |-
+        version: 0.1
+        frontend:
+          phases:
+            preBuild:
+              commands:
+                - cd Website
+                - npm install
+            build:
+              commands:
+                - vue-cli-service build
+          artifacts:
+            baseDirectory: 'Website/build'
+            files:
+              - '**/*'
+          cache:
+            paths:
+              - node_modules/**/*
+      IAMServiceRole: !GetAtt Role.Arn
+
+  Branch:
+    Type: AWS::Amplify::Branch
+    Properties:
+      BranchName: main
+      AppId: !GetAtt App.AppId
+      Description: Main Branch
+      EnableAutoBuild: true
+      Tags:
+        - Key: Name
+          Value: doujin-db-website-main
+        - Key: Branch
+          Value: main
+
+Outputs:
+  DefaultDomain:
+    Value: !GetAtt App.DefaultDomain
